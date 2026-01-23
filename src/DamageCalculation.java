@@ -1,7 +1,49 @@
 import java.text.DecimalFormat;
 import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 public class DamageCalculation {
+    // ============================================================================
+    // CONSTANTS - Default values and configuration
+    // ============================================================================
+    private static final String DEFAULT_ATTACKER_NAME = "Attacker";
+    private static final String DEFAULT_DEFENDER_NAME = "Defender";
+    private static final String DEFAULT_SKILL_NAME = "Basic";
+
+    // Default stat values
+    private static final double DEFAULT_ATTACKER_ATK = 1000.0;
+    private static final double DEFAULT_ATTACKER_HP = 4000.0;
+    private static final double DEFAULT_ATTACKER_DEF = 500.0;
+    private static final double DEFAULT_ATTACKER_SPD = 100.0;
+    private static final double DEFAULT_DEFENDER_HP = 8000.0;
+    private static final double DEFAULT_DEFENDER_DEF = 800.0;
+
+    // Default skill coefficients
+    private static final double DEFAULT_ATK_COEF = 1.7;
+    private static final double DEFAULT_DEF_COEF = 3.6;
+    private static final double DEFAULT_HP_COEF = 0.19;
+    private static final double DEFAULT_ACOEF = 1.7;
+    private static final double DEFAULT_DCOEF = 2.9;
+    private static final double DEFAULT_SPD_ADD = 60.0;
+    private static final double DEFAULT_SPD_DIV = 620.0;
+
+    // Elemental bonuses/penalties
+    private static final double ELEMENT_STRONGER_DAMAGE_MUL = 1.05;
+    private static final double ELEMENT_STRONGER_CRIT_DELTA = 0.15;
+    private static final double ELEMENT_WEAKER_CRIT_DELTA = -0.15;
+    private static final double ELEMENT_WEAKER_GLANCE_PROB = 0.5;
+    private static final double ELEMENT_WEAKER_NORMAL_MUL = 0.95;
+    private static final double ELEMENT_WEAKER_GLANCE_MUL = 0.70 * 0.84; // 0.588
+
+    // Defense formula constants
+    private static final double GENERIC_DEF_DIVISOR = 100.0;
+    private static final double EPSILON = 1e-9;
+
+    // ============================================================================
+    // ENUMS
+    // ============================================================================
 
     public enum FormulaType {
         GENERIC,
@@ -182,19 +224,19 @@ public class DamageCalculation {
         double glancingMultiplier = 1.0; // multiplier applied on glancing hit (e.g., 0.70 * 0.84)
 
         if (rel == ElemRelation.STRONGER) {
-            elemDamageMul = 1.05;     // +5% damage
-            elemCritDelta = 0.15;     // +15% crit rate
+            elemDamageMul = ELEMENT_STRONGER_DAMAGE_MUL;     // +5% damage
+            elemCritDelta = ELEMENT_STRONGER_CRIT_DELTA;     // +15% crit rate
             glancingProb = 0.0;
             nonGlanceMultiplier = 1.0;
             glancingMultiplier = 1.0;
         } else if (rel == ElemRelation.WEAKER) {
             elemDamageMul = 1.0;
-            elemCritDelta = -0.15;    // -15% crit rate (always)
-            glancingProb = 0.5;       // 50% chance to be a glancing hit
+            elemCritDelta = ELEMENT_WEAKER_CRIT_DELTA;    // -15% crit rate (always)
+            glancingProb = ELEMENT_WEAKER_GLANCE_PROB;       // 50% chance to be a glancing hit
             // Non-glancing (the other 50%): normal/crit hits are reduced by 5%
-            nonGlanceMultiplier = 0.95;
+            nonGlanceMultiplier = ELEMENT_WEAKER_NORMAL_MUL;
             // glancing reduces damage by 30% and an additional 16% on top when attacker is weaker
-            glancingMultiplier = 0.70 * 0.84; // = 0.588
+            glancingMultiplier = ELEMENT_WEAKER_GLANCE_MUL;
         } else {
             // NEUTRAL: no element effects
             elemDamageMul = 1.0;
@@ -252,10 +294,10 @@ public class DamageCalculation {
             afterAvg_glance = perHitBase * glancingMultiplier * avgCritFactor_glance;
         } else {
             // Compute defense factor depending on formula
-            double factorGen = 100.0 / (100.0 + effectiveDef);
+            double factorGen = GENERIC_DEF_DIVISOR / (GENERIC_DEF_DIVISOR + effectiveDef);
             double factorSW = 1.0;
             if (effectiveAttack + effectiveDef > 0) {
-                factorSW = effectiveAttack / (effectiveAttack + effectiveDef + 1e-9);
+                factorSW = effectiveAttack / (effectiveAttack + effectiveDef + EPSILON);
             } else {
                 factorSW = 0.0;
             }
@@ -281,6 +323,41 @@ public class DamageCalculation {
         totalAvg = Math.max(0.0, totalAvg);
 
         return new double[] { totalNoCrit, totalCrit, totalAvg };
+    }
+
+    // ============================================================================
+    // HELPER METHODS - Input Processing
+    // ============================================================================
+
+    private static double parseDoubleOrDefault(String s, double def) {
+        if (s == null || s.isEmpty()) return def;
+        try {
+            return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private static double promptDouble(Scanner sc, String prompt, double defaultValue) {
+        System.out.print(prompt + " [" + defaultValue + "]: ");
+        return parseDoubleOrDefault(sc.nextLine().trim(), defaultValue);
+    }
+
+    private static int promptInt(Scanner sc, String prompt, int defaultValue) {
+        System.out.print(prompt + " [" + defaultValue + "]: ");
+        return (int) parseDoubleOrDefault(sc.nextLine().trim(), defaultValue);
+    }
+
+    private static String promptString(Scanner sc, String prompt, String defaultValue) {
+        System.out.print(prompt + " [" + defaultValue + "]: ");
+        String input = sc.nextLine().trim();
+        return input.isEmpty() ? defaultValue : input;
+    }
+
+    private static boolean promptBoolean(Scanner sc, String prompt) {
+        System.out.print(prompt + " (y/N): ");
+        String input = sc.nextLine().trim().toLowerCase();
+        return input.equals("y") || input.equals("yes");
     }
 
     private static double clamp(double v, double a, double b) {
@@ -318,6 +395,109 @@ public class DamageCalculation {
             case 5: return Element.DARK;
             default: return Element.NONE;
         }
+    }
+
+    // ============================================================================
+    // HELPER METHODS - Unit Input
+    // ============================================================================
+
+    private static Unit promptAttacker(Scanner sc) {
+        String name = promptString(sc, "Attacker name", DEFAULT_ATTACKER_NAME);
+        Unit attacker = new Unit(name);
+
+        System.out.println("Choose attacker element: 1=FIRE, 2=WIND, 3=WATER, 4=LIGHT, 5=DARK, else NONE");
+        String elemInput = sc.nextLine().trim();
+        attacker.element = elemInput.isEmpty() ? Element.NONE : chooseElementFromInt(Integer.parseInt(elemInput));
+
+        attacker.baseAtk = promptDouble(sc, "Attacker base ATK", DEFAULT_ATTACKER_ATK);
+        attacker.bonusAtk = promptDouble(sc, "Attacker bonus ATK", 0.0);
+        attacker.baseHp = promptDouble(sc, "Attacker base HP", DEFAULT_ATTACKER_HP);
+        attacker.bonusHp = promptDouble(sc, "Attacker bonus HP", 0.0);
+        attacker.baseDef = promptDouble(sc, "Attacker base DEF", DEFAULT_ATTACKER_DEF);
+        attacker.bonusDef = promptDouble(sc, "Attacker bonus DEF", 0.0);
+        attacker.baseSpd = promptDouble(sc, "Attacker base SPD", DEFAULT_ATTACKER_SPD);
+        attacker.bonusSpd = promptDouble(sc, "Attacker bonus SPD", 0.0);
+
+        attacker.attackBuffPercent = promptDouble(sc, "Attacker attack buff percent", 0.0) / 100.0;
+        attacker.flatAttack = promptDouble(sc, "Attacker flat attack addition", 0.0);
+        attacker.critRate = promptDouble(sc, "Attacker crit rate percent", 0.0) / 100.0;
+        attacker.critDamage = promptDouble(sc, "Attacker crit damage percent", 50.0) / 100.0;
+        attacker.defenseBreakPercent = promptDouble(sc, "Attacker defense break percent", 0.0) / 100.0;
+        attacker.ignoreDefensePercent = promptDouble(sc, "Attacker ignore defense percent", 0.0) / 100.0;
+        attacker.damageAmplifyPercent = promptDouble(sc, "Attacker damage amplify percent", 0.0) / 100.0;
+
+        return attacker;
+    }
+
+    private static Unit promptDefender(Scanner sc) {
+        String name = promptString(sc, "Defender name", DEFAULT_DEFENDER_NAME);
+        Unit defender = new Unit(name);
+
+        System.out.println("Choose defender element: 1=FIRE, 2=WIND, 3=WATER, 4=LIGHT, 5=DARK, else NONE");
+        String elemInput = sc.nextLine().trim();
+        defender.element = elemInput.isEmpty() ? Element.NONE : chooseElementFromInt(Integer.parseInt(elemInput));
+
+        defender.baseHp = promptDouble(sc, "Defender base HP", DEFAULT_DEFENDER_HP);
+        defender.bonusHp = promptDouble(sc, "Defender bonus HP", 0.0);
+        defender.baseDef = promptDouble(sc, "Defender base DEF", DEFAULT_DEFENDER_DEF);
+        defender.bonusDef = promptDouble(sc, "Defender bonus DEF", 0.0);
+        defender.damageReductionPercent = promptDouble(sc, "Defender damage reduction percent", 0.0) / 100.0;
+
+        return defender;
+    }
+
+    private static Skill promptSkill(Scanner sc) {
+        String name = promptString(sc, "Skill name", DEFAULT_SKILL_NAME);
+
+        System.out.println("\nChoose scaling mode:");
+        System.out.println("1) ATK_COEF        (coef * ATK)");
+        System.out.println("2) DEF_COEF        (coef * DEF)");
+        System.out.println("3) HP_COEF         (coef * MAX_HP)");
+        System.out.println("4) ATK_DEF_COMBO   (aCoef*ATK + dCoef*DEF)");
+        System.out.println("5) SPD_WITH_ATK    (ATK * (SPD + add) / div)");
+        System.out.println("6) SPD_WITH_DEF    (DEF * (SPD + add) / div)");
+        System.out.println("7) SPD_WITH_HP     (MAX_HP * (SPD + add) / div)");
+        System.out.println("Any other -> NORMAL_ATK");
+
+        int modeChoice = promptInt(sc, "Scaling mode", 1);
+        ScalingMode mode = chooseModeFromInt(modeChoice);
+
+        double multiplier = promptDouble(sc, "Skill multiplier", 1.0);
+        double flatDamage = promptDouble(sc, "Skill flat damage", 0.0);
+        int hits = Math.max(1, promptInt(sc, "Number of hits", 1));
+        boolean ignoreDef = promptBoolean(sc, "Skill ignores defense entirely?");
+
+        Skill skill = new Skill(name, multiplier, mode);
+        skill.flatDamage = flatDamage;
+        skill.hits = hits;
+        skill.ignoreDefense = ignoreDef;
+
+        // Prompt for coefficients based on mode
+        switch (mode) {
+            case ATK_COEF:
+                skill.coef = promptDouble(sc, "Coefficient for ATK (coef * ATK)", DEFAULT_ATK_COEF);
+                break;
+            case DEF_COEF:
+                skill.coef = promptDouble(sc, "Coefficient for DEF (coef * DEF)", DEFAULT_DEF_COEF);
+                break;
+            case HP_COEF:
+                skill.coef = promptDouble(sc, "Coefficient for MAX_HP (coef * MAX_HP)", DEFAULT_HP_COEF);
+                break;
+            case ATK_DEF_COMBO:
+                skill.aCoef = promptDouble(sc, "aCoef for ATK (aCoef * ATK)", DEFAULT_ACOEF);
+                skill.dCoef = promptDouble(sc, "dCoef for DEF (dCoef * DEF)", DEFAULT_DCOEF);
+                break;
+            case SPD_WITH_ATK:
+            case SPD_WITH_DEF:
+            case SPD_WITH_HP:
+                skill.spdAdd = promptDouble(sc, "SPD addition (SPD + add)", DEFAULT_SPD_ADD);
+                skill.spdDiv = promptDouble(sc, "SPD divisor (/div)", DEFAULT_SPD_DIV);
+                break;
+            default:
+                break;
+        }
+
+        return skill;
     }
 
     public static void main(String[] args) {
@@ -617,12 +797,4 @@ public class DamageCalculation {
         System.out.println();
     }
 
-    private static double parseDoubleOrDefault(String s, double def) {
-        if (s == null || s.isEmpty()) return def;
-        try {
-            return Double.parseDouble(s);
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
 }
