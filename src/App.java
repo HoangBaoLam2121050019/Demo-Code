@@ -24,5 +24,6 @@ public class App {
         }else {
             System.out.println("hai so bang nhau");
         }
+        sc.close();
     }
 }

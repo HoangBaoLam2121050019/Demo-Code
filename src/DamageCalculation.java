@@ -2,7 +2,6 @@ import java.text.DecimalFormat;
 import java.util.Scanner;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.EnumMap;
 
 public class DamageCalculation {
     // ============================================================================
@@ -254,12 +253,6 @@ public class DamageCalculation {
 
     // returns {noCritTotal, critTotal, averageTotal} — totals already summed across hits
     public static double[] calculateDamage(Unit attacker, Unit defender, Skill skill, FormulaType formulaType) {
-        // Totals
-        double atkTot = attacker.totalAtk();
-        double defTot = defender.totalDef();
-        double hpTot = attacker.totalHp();
-        double spdTot = attacker.totalSpd();
-
         // Effective attack and base scaled per hit
         double effectiveAttack = computeEffectiveAttack(attacker);
         double baseScaledPerHit = computeBaseScaledPerHit(attacker, defender, skill, effectiveAttack);
