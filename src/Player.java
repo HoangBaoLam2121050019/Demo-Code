@@ -8,7 +8,7 @@ public class Player {
     }
 
     public void BreakBlock(World world) {
-        Block block = world.getBlock(x, y);
+        Block block = world.getBlockForPosition(x, y);
         if (block.isBreakable()) {
             world.setBlock(x, y, new AirBlock());
             System.out.println("Broke " + block.getName() + " block.");

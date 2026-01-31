@@ -18,7 +18,10 @@ public class World {
         }
     }
 
-    public Block getBlock(int x, int y) {
+    public Block getBlockForPosition(int x, int y) {
+        if ( x < 0 || y <  0 || y >= grid.length || x >= grid[y].length) {
+            return new AirBlock();
+        }
         return grid[y][x];
     }
 
