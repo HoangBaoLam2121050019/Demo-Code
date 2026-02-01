@@ -1,7 +1,7 @@
 import java.util.Scanner;
 public class Game {
     public static void main(String[] args) {
-        World world = new World(10, 10);
+        World world = new World(100, 100);
         Player player = new Player(5, 7);
         System.out.println("Initial World:");
         world.printWorld();
