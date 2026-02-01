@@ -7,4 +7,8 @@ public class StoneBlock extends Block {
     public char getSymbol() {
         return 'S';
     }
+    @Override
+    public boolean isWalkable() {
+        return false;
+    }
 }

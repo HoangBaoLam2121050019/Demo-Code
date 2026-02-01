@@ -16,4 +16,31 @@ public class Player {
             System.out.println(block.getName() + " block cannot be broken.");
         }
     }
+
+    public void move(char direction, World world) {
+        int newX = x;
+        int newY = y;
+        switch (direction) {
+            case 'W':
+                newY--;
+                break;
+            case 'S':
+                newY++;
+                break;
+            case 'A':
+                newX--;
+                break;
+            case 'D':
+                newX++;
+                break;
+        }
+        Block target = world.getBlockForPosition(newX, newY);
+        if (target != null && target.isWalkable()) {
+            x = newX;
+            y = newY;
+            System.out.println("Moved to (" + x + ", " + y + ")");
+        } else {
+            System.out.println("Cannot move to (" + newX + ", " + newY + ")");
+        }
+    }
 }

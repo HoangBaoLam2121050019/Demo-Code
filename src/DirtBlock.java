@@ -7,4 +7,8 @@ public class DirtBlock extends Block {
     public char getSymbol() {
         return 'D';
     }
+    @Override
+    public boolean isWalkable() {
+        return false;
+    }
 }

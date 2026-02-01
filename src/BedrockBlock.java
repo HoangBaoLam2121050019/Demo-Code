@@ -7,4 +7,8 @@ public class BedrockBlock extends Block {
     public char getSymbol() {
         return 'B';
     }
+    @Override
+    public boolean isWalkable() {
+        return false;
+    }
 }

@@ -7,5 +7,6 @@ public abstract class Block {
     public boolean isBreakable() {
         return breakable;
     }
-    public abstract char getSymbol();   
+    public abstract char getSymbol();
+    public abstract boolean isWalkable();
 }

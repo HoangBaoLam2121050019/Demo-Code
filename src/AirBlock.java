@@ -7,4 +7,8 @@ public class AirBlock extends Block {
     public char getSymbol() {
         return ' ';
     }
+    @Override
+    public boolean isWalkable() {
+        return true;
+    }
 }

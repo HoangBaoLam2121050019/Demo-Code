@@ -7,4 +7,8 @@ public class WoodBlock extends Block {
     public char getSymbol() {
         return 'W';
     }
+    @Override
+    public boolean isWalkable() {
+        return false;
+    }
 }

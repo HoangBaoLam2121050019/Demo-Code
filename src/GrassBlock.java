@@ -7,4 +7,8 @@ public class GrassBlock extends Block {
     public char getSymbol() {
         return 'G';
     }
+    @Override
+    public boolean isWalkable() {
+        return false;
+    }
 }
