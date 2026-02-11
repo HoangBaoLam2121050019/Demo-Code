@@ -7,6 +7,14 @@ public class Player {
         this.y = startY;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public void BreakBlock(World world) {
         Block block = world.getBlockForPosition(x, y);
         if (block.isBreakable()) {
