@@ -29,8 +29,8 @@ public class DamageCalculation {
     private static final double DEFAULT_ATK_COEF = 1.7;
     private static final double DEFAULT_DEF_COEF = 3.6;
     private static final double DEFAULT_HP_COEF = 0.19;
-    private static final double DEFAULT_ACOEF = 1.7;
-    private static final double DEFAULT_DCOEF = 2.9;
+    private static final double DEFAULT_ACO = 1.7;
+    private static final double DEFAULT_DEFOE = 2.9;
     private static final double DEFAULT_SPD_ADD = 60.0;
     private static final double DEFAULT_SPD_DIV = 620.0;
 
@@ -128,9 +128,9 @@ public class DamageCalculation {
 
     public static class Skill {
         public String name;
-        public double multiplier = 1.0; // applied after base scaling value
+        public double multiplier; // applied after base scaling value
         public double flatDamage = 0.0;
-        public ScalingMode mode = ScalingMode.NORMAL_ATK;
+        public ScalingMode mode;
 
         // multi-hit
         public int hits = 1;                  // number of hits; default 1
@@ -179,21 +179,8 @@ public class DamageCalculation {
     }
 
     // Container for elemental modifiers
-    private static class ElementalModifiers {
-        final double elemDamageMul;
-        final double elemCritDelta;
-        final double glancingProb;
-        final double nonGlanceMultiplier;
-        final double glancingMultiplier;
-
-        ElementalModifiers(double elemDamageMul, double elemCritDelta, double glancingProb,
-                           double nonGlanceMultiplier, double glancingMultiplier) {
-            this.elemDamageMul = elemDamageMul;
-            this.elemCritDelta = elemCritDelta;
-            this.glancingProb = glancingProb;
-            this.nonGlanceMultiplier = nonGlanceMultiplier;
-            this.glancingMultiplier = glancingMultiplier;
-        }
+        private record ElementalModifiers(double elemDamageMul, double elemCritDelta, double glancingProb,
+                                          double nonGlanceMultiplier, double glancingMultiplier) {
     }
 
     // Extracted helper: compute elemental interaction modifiers
@@ -527,8 +514,8 @@ public class DamageCalculation {
                 skill.coef = validateCoefficient(promptDouble(sc, "Coefficient for MAX_HP (coef * MAX_HP)", DEFAULT_HP_COEF), "HP coef");
                 break;
             case ATK_DEF_COMBO:
-                skill.aCoef = validateCoefficient(promptDouble(sc, "aCoef for ATK (aCoef * ATK)", DEFAULT_ACOEF), "aCoef");
-                skill.dCoef = validateCoefficient(promptDouble(sc, "dCoef for DEF (dCoef * DEF)", DEFAULT_DCOEF), "dCoef");
+                skill.aCoef = validateCoefficient(promptDouble(sc, "aCoef for ATK (aCoef * ATK)", DEFAULT_ACO), "aCoef");
+                skill.dCoef = validateCoefficient(promptDouble(sc, "dCoef for DEF (dCoef * DEF)", DEFAULT_DEFOE), "dCoef");
                 break;
             case SPD_WITH_ATK:
             case SPD_WITH_DEF:
