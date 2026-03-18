@@ -230,25 +230,16 @@ public class DamageCalculation {
     // Extracted helper: compute base scaled value per hit according to skill scaling mode
     private static double computeBaseScaledPerHit(Unit attacker, Unit defender, Skill skill, double effectiveAttack) {
         double spdTot = attacker.totalSpd();
-        switch (skill.mode) {
-            case ATK_COEF:
-                return skill.coef * effectiveAttack;
-            case DEF_COEF:
-                return skill.coef * defender.totalDef();
-            case HP_COEF:
-                return skill.coef * attacker.totalHp();
-            case ATK_DEF_COMBO:
-                return skill.aCoef * effectiveAttack + skill.dCoef * defender.totalDef();
-            case SPD_WITH_ATK:
-                return effectiveAttack * ((spdTot + skill.spdAdd) / skill.spdDiv);
-            case SPD_WITH_DEF:
-                return defender.totalDef() * ((spdTot + skill.spdAdd) / skill.spdDiv);
-            case SPD_WITH_HP:
-                return attacker.totalHp() * ((spdTot + skill.spdAdd) / skill.spdDiv);
-            case NORMAL_ATK:
-            default:
-                return effectiveAttack;
-        }
+        return switch (skill.mode) {
+            case ATK_COEF -> skill.coef * effectiveAttack;
+            case DEF_COEF -> skill.coef * defender.totalDef();
+            case HP_COEF -> skill.coef * attacker.totalHp();
+            case ATK_DEF_COMBO -> skill.aCoef * effectiveAttack + skill.dCoef * defender.totalDef();
+            case SPD_WITH_ATK -> effectiveAttack * ((spdTot + skill.spdAdd) / skill.spdDiv);
+            case SPD_WITH_DEF -> defender.totalDef() * ((spdTot + skill.spdAdd) / skill.spdDiv);
+            case SPD_WITH_HP -> attacker.totalHp() * ((spdTot + skill.spdAdd) / skill.spdDiv);
+            default -> effectiveAttack;
+        };
     }
 
     // returns {noCritTotal, critTotal, averageTotal} — totals already summed across hits
@@ -351,9 +342,9 @@ public class DamageCalculation {
         return parseDoubleOrDefault(sc.nextLine().trim(), defaultValue);
     }
 
-    private static int promptInt(Scanner sc, String prompt, int defaultValue) {
-        System.out.print(prompt + " [" + defaultValue + "]: ");
-        return (int) parseDoubleOrDefault(sc.nextLine().trim(), defaultValue);
+    private static int promptInt(Scanner sc, String prompt) {
+        System.out.print(prompt + " [" + 1 + "]: ");
+        return (int) parseDoubleOrDefault(sc.nextLine().trim(), 1);
     }
 
     private static String promptString(Scanner sc, String prompt, String defaultValue) {
@@ -362,8 +353,8 @@ public class DamageCalculation {
         return input.isEmpty() ? defaultValue : input;
     }
 
-    private static boolean promptBoolean(Scanner sc, String prompt) {
-        System.out.print(prompt + " (y/N): ");
+    private static boolean promptBoolean(Scanner sc) {
+        System.out.print("Skill ignores defense entirely?" + " (y/N): ");
         String input = sc.nextLine().trim().toLowerCase();
         return input.equals("y") || input.equals("yes");
     }
@@ -373,10 +364,10 @@ public class DamageCalculation {
     }
 
     // Validation helpers
-    private static double validatePositive(double value, String fieldName, double min, double max) {
-        if (value < min || value > max) {
-            System.out.println("Warning: " + fieldName + " out of range [" + min + ", " + max + "]. Clamping.");
-            return clamp(value, min, max);
+    private static double validatePositive(double value, String fieldName) {
+        if (value < 0.0 || value > Double.MAX_VALUE) {
+            System.out.println("Warning: " + fieldName + " out of range [" + 0.0 + ", " + Double.MAX_VALUE + "]. Clamping.");
+            return clamp(value, 0.0, Double.MAX_VALUE);
         }
         return value;
     }
@@ -397,9 +388,9 @@ public class DamageCalculation {
         return value;
     }
 
-    private static int validatePositiveInt(int value, String fieldName) {
+    private static int validatePositiveInt(int value) {
         if (value < 0) {
-            System.out.println("Warning: " + fieldName + " should be non-negative. Using 0.");
+            System.out.println("Warning: " + "Number of hits" + " should be non-negative. Using 0.");
             return 0;
         }
         return value;
@@ -414,27 +405,27 @@ public class DamageCalculation {
     }
 
     private static ScalingMode chooseModeFromInt(int i) {
-        switch (i) {
-            case 1: return ScalingMode.ATK_COEF;
-            case 2: return ScalingMode.DEF_COEF;
-            case 3: return ScalingMode.HP_COEF;
-            case 4: return ScalingMode.ATK_DEF_COMBO;
-            case 5: return ScalingMode.SPD_WITH_ATK;
-            case 6: return ScalingMode.SPD_WITH_DEF;
-            case 7: return ScalingMode.SPD_WITH_HP;
-            default: return ScalingMode.NORMAL_ATK;
-        }
+        return switch (i) {
+            case 1 -> ScalingMode.ATK_COEF;
+            case 2 -> ScalingMode.DEF_COEF;
+            case 3 -> ScalingMode.HP_COEF;
+            case 4 -> ScalingMode.ATK_DEF_COMBO;
+            case 5 -> ScalingMode.SPD_WITH_ATK;
+            case 6 -> ScalingMode.SPD_WITH_DEF;
+            case 7 -> ScalingMode.SPD_WITH_HP;
+            default -> ScalingMode.NORMAL_ATK;
+        };
     }
 
     private static Element chooseElementFromInt(int i) {
-        switch (i) {
-            case 1: return Element.FIRE;
-            case 2: return Element.WIND;
-            case 3: return Element.WATER;
-            case 4: return Element.LIGHT;
-            case 5: return Element.DARK;
-            default: return Element.NONE;
-        }
+        return switch (i) {
+            case 1 -> Element.FIRE;
+            case 2 -> Element.WIND;
+            case 3 -> Element.WATER;
+            case 4 -> Element.LIGHT;
+            case 5 -> Element.DARK;
+            default -> Element.NONE;
+        };
     }
 
     private static FormulaType chooseFormulaFromInt(int i) {
@@ -445,7 +436,7 @@ public class DamageCalculation {
         System.out.println("\nChoose defense formula:");
         System.out.println("1) GENERIC");
         System.out.println("2) SUMMONER_WAR_LIKE");
-        int choice = promptInt(sc, "Choice", 1);
+        int choice = promptInt(sc, "Choice");
         return chooseFormulaFromInt(choice);
     }
 
@@ -461,17 +452,17 @@ public class DamageCalculation {
         String elemInput = sc.nextLine().trim();
         attacker.element = elemInput.isEmpty() ? Element.NONE : chooseElementFromInt(Integer.parseInt(elemInput));
 
-        attacker.baseAtk = validatePositive(promptDouble(sc, "Attacker base ATK", DEFAULT_ATTACKER_ATK), "Base ATK", 0.0, Double.MAX_VALUE);
-        attacker.bonusAtk = validatePositive(promptDouble(sc, "Attacker bonus ATK", 0.0), "Bonus ATK", 0.0, Double.MAX_VALUE);
-        attacker.baseHp = validatePositive(promptDouble(sc, "Attacker base HP", DEFAULT_ATTACKER_HP), "Base HP", 0.0, Double.MAX_VALUE);
-        attacker.bonusHp = validatePositive(promptDouble(sc, "Attacker bonus HP", 0.0), "Bonus HP", 0.0, Double.MAX_VALUE);
-        attacker.baseDef = validatePositive(promptDouble(sc, "Attacker base DEF", DEFAULT_ATTACKER_DEF), "Base DEF", 0.0, Double.MAX_VALUE);
-        attacker.bonusDef = validatePositive(promptDouble(sc, "Attacker bonus DEF", 0.0), "Bonus DEF", 0.0, Double.MAX_VALUE);
-        attacker.baseSpd = validatePositive(promptDouble(sc, "Attacker base SPD", DEFAULT_ATTACKER_SPD), "Base SPD", 0.0, Double.MAX_VALUE);
-        attacker.bonusSpd = validatePositive(promptDouble(sc, "Attacker bonus SPD", 0.0), "Bonus SPD", 0.0, Double.MAX_VALUE);
+        attacker.baseAtk = validatePositive(promptDouble(sc, "Attacker base ATK", DEFAULT_ATTACKER_ATK), "Base ATK");
+        attacker.bonusAtk = validatePositive(promptDouble(sc, "Attacker bonus ATK", 0.0), "Bonus ATK");
+        attacker.baseHp = validatePositive(promptDouble(sc, "Attacker base HP", DEFAULT_ATTACKER_HP), "Base HP");
+        attacker.bonusHp = validatePositive(promptDouble(sc, "Attacker bonus HP", 0.0), "Bonus HP");
+        attacker.baseDef = validatePositive(promptDouble(sc, "Attacker base DEF", DEFAULT_ATTACKER_DEF), "Base DEF");
+        attacker.bonusDef = validatePositive(promptDouble(sc, "Attacker bonus DEF", 0.0), "Bonus DEF");
+        attacker.baseSpd = validatePositive(promptDouble(sc, "Attacker base SPD", DEFAULT_ATTACKER_SPD), "Base SPD");
+        attacker.bonusSpd = validatePositive(promptDouble(sc, "Attacker bonus SPD", 0.0), "Bonus SPD");
 
         attacker.attackBuffPercent = validatePercentage(promptDouble(sc, "Attacker attack buff percent", 0.0), "Attack buff") / 100.0;
-        attacker.flatAttack = validatePositive(promptDouble(sc, "Attacker flat attack addition", 0.0), "Flat attack", 0.0, Double.MAX_VALUE);
+        attacker.flatAttack = validatePositive(promptDouble(sc, "Attacker flat attack addition", 0.0), "Flat attack");
         attacker.critRate = validatePercentage(promptDouble(sc, "Attacker crit rate percent", 0.0), "Crit rate") / 100.0;
         attacker.critDamage = validatePercentage(promptDouble(sc, "Attacker crit damage percent", 50.0), "Crit damage") / 100.0;
         attacker.defenseBreakPercent = validatePercentage(promptDouble(sc, "Attacker defense break percent", 0.0), "Defense break") / 100.0;
@@ -489,10 +480,10 @@ public class DamageCalculation {
         String elemInput = sc.nextLine().trim();
         defender.element = elemInput.isEmpty() ? Element.NONE : chooseElementFromInt(Integer.parseInt(elemInput));
 
-        defender.baseHp = validatePositive(promptDouble(sc, "Defender base HP", DEFAULT_DEFENDER_HP), "Base HP", 0.0, Double.MAX_VALUE);
-        defender.bonusHp = validatePositive(promptDouble(sc, "Defender bonus HP", 0.0), "Bonus HP", 0.0, Double.MAX_VALUE);
-        defender.baseDef = validatePositive(promptDouble(sc, "Defender base DEF", DEFAULT_DEFENDER_DEF), "Base DEF", 0.0, Double.MAX_VALUE);
-        defender.bonusDef = validatePositive(promptDouble(sc, "Defender bonus DEF", 0.0), "Bonus DEF", 0.0, Double.MAX_VALUE);
+        defender.baseHp = validatePositive(promptDouble(sc, "Defender base HP", DEFAULT_DEFENDER_HP), "Base HP");
+        defender.bonusHp = validatePositive(promptDouble(sc, "Defender bonus HP", 0.0), "Bonus HP");
+        defender.baseDef = validatePositive(promptDouble(sc, "Defender base DEF", DEFAULT_DEFENDER_DEF), "Base DEF");
+        defender.bonusDef = validatePositive(promptDouble(sc, "Defender bonus DEF", 0.0), "Bonus DEF");
         defender.damageReductionPercent = validatePercentage(promptDouble(sc, "Defender damage reduction percent", 0.0), "Damage reduction") / 100.0;
 
         return defender;
@@ -511,13 +502,13 @@ public class DamageCalculation {
         System.out.println("7) SPD_WITH_HP     (MAX_HP * (SPD + add) / div)");
         System.out.println("Any other -> NORMAL_ATK");
 
-        int modeChoice = promptInt(sc, "Scaling mode", 1);
+        int modeChoice = promptInt(sc, "Scaling mode");
         ScalingMode mode = chooseModeFromInt(modeChoice);
 
-        double multiplier = validatePositive(promptDouble(sc, "Skill multiplier", 1.0), "Multiplier", 0.0, Double.MAX_VALUE);
-        double flatDamage = validatePositive(promptDouble(sc, "Skill flat damage", 0.0), "Flat damage", 0.0, Double.MAX_VALUE);
-        int hits = validatePositiveInt(Math.max(1, promptInt(sc, "Number of hits", 1)), "Number of hits");
-        boolean ignoreDef = promptBoolean(sc, "Skill ignores defense entirely?");
+        double multiplier = validatePositive(promptDouble(sc, "Skill multiplier", 1.0), "Multiplier");
+        double flatDamage = validatePositive(promptDouble(sc, "Skill flat damage", 0.0), "Flat damage");
+        int hits = validatePositiveInt(Math.max(1, promptInt(sc, "Number of hits")));
+        boolean ignoreDef = promptBoolean(sc);
 
         Skill skill = new Skill(name, multiplier, mode);
         skill.flatDamage = flatDamage;
@@ -556,8 +547,7 @@ public class DamageCalculation {
         System.out.println("Damage Calculator (primary-stat scaling, SPD pairing allowed, multi-hit skills, elemental interactions).");
         System.out.println();
 
-        Scanner sc = new Scanner(System.in);
-        try {
+        try (Scanner sc = new Scanner(System.in)) {
             Unit attacker = promptAttacker(sc);
             System.out.println();
             Unit defender = promptDefender(sc);
@@ -579,7 +569,7 @@ public class DamageCalculation {
             System.out.println("Pre-defense base scaled (per-hit, no crit): " + DF_DISPLAY.format(preScaled));
             System.out.println("Total hits: " + skill.hits);
             System.out.println("Pre-defense total (no crit): " + DF_DISPLAY.format(preScaled * skill.hits));
-            System.out.println("Crit multiplier: x" + DF_DISPLAY.format(1.0 + attacker.critDamage) + " (base crit rate " + (int)(attacker.critRate * 100) + "%)");
+            System.out.println("Crit multiplier: x" + DF_DISPLAY.format(1.0 + attacker.critDamage) + " (base crit rate " + (int) (attacker.critRate * 100) + "%)");
             // show elemental relation
             ElemRelation rel = elementRelation(attacker.element, defender.element);
             System.out.println("Element interaction: Attacker " + attacker.element + " vs Defender " + defender.element + " -> " + rel);
@@ -588,8 +578,6 @@ public class DamageCalculation {
         } catch (Exception ex) {
             System.out.println("Error: " + ex.getMessage());
             ex.printStackTrace();
-        } finally {
-            sc.close();
         }
     }
 
