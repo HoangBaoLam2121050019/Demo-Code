@@ -2,6 +2,8 @@ import java.text.DecimalFormat;
 import java.util.Scanner;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DamageCalculation {
     // ============================================================================
@@ -9,6 +11,7 @@ public class DamageCalculation {
     // ============================================================================
     private static final DecimalFormat DF_DEFAULT = new DecimalFormat("#,##0.00");
     private static final DecimalFormat DF_DISPLAY = new DecimalFormat("#,##0.##");
+    private static final Logger LOGGER = Logger.getLogger(DamageCalculation.class.getName());
 
     // ============================================================================
     // CONSTANTS - Default values and configuration
@@ -564,7 +567,7 @@ public class DamageCalculation {
 
         } catch (Exception ex) {
             System.out.println("Error: " + ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Unhandled error while computing damage.", ex);
         }
     }
 
